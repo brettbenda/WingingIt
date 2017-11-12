@@ -12,11 +12,23 @@ int framesSinceLastPowerup =300;
 int powerupDelay = 800;
 
 float score = 0;
+JSONObject json;
+int hs1 = 0;
+int hs2 = 0;
+int hs3 = 0;
+boolean scoreUpdated = false;
+
+
 
 void setup() {
   size(1000, 1000);
   background(255);
   test = new Airplane(500, 500);
+
+  json = loadJSONObject("highscores.json");
+  hs1 = json.getInt("highscore_1");
+  hs2 = json.getInt("highscore_2");
+  hs3 = json.getInt("highscore_3");
 }
 
 
@@ -170,7 +182,7 @@ void gameMenu() {
       powerUps.add(new BulletRateUp(random(0, width), random(0, height)));
       break;
     case 3:
-      powerUps.add(new SpeedUp(random(0,width),random(0,height)));
+      powerUps.add(new SpeedUp(random(0, width), random(0, height)));
       break;
     }
     framesSinceLastPowerup = 0;
@@ -276,13 +288,40 @@ void rulesMenu() {
 
 void overMenu() {
   background(#bad9ff);
-  
+
   fill(255);
   textFont(createFont("Tahoma", 60));
-  text("You scored " + (int)score + " points!",500,300);
+  text("You scored " + (int)score + " points!", 500, 300);
+
+  if (!scoreUpdated) {
+    if (score>hs1) {
+      hs3 = hs2;
+      hs2 = hs1;
+      hs1 = (int)score;
+      json.setInt("highscore_3", hs3);
+      json.setInt("highscore_2", hs2);
+      json.setInt("highscore_1", hs1);
+    } else if (score>hs2 && score<hs1) {
+      hs3 = hs2;
+      hs2 = (int)score;
+      json.setInt("highscore_3", hs3);
+      json.setInt("highscore_2", hs2);
+    } else if (score>hs3 && score<hs2) {
+      hs3 = (int)score;
+      json.setInt("highscore_3", hs3);
+    }
+    saveJSONObject(json, "highscores.json");
+    scoreUpdated = true;
+  }
+  text("High score #1: " + hs1, 500, 400);
+  text("High score #2: " + hs2, 500, 470);
+  text("High score #3: " + hs3, 500, 540);
+
+
   Button replayButton = new Button(500, 750, 150, 80, "Replay");
   if (replayButton.isClicked()) {
     resetGame();
+    scoreUpdated = false;
     menu="game";
   }
   replayButton.show();
@@ -290,13 +329,23 @@ void overMenu() {
   Button exitButton = new Button(500, 850, 400, 80, "Return to Main Menu");
   if (exitButton.isClicked()) {
     resetGame();
+    scoreUpdated = false;
     menu="main";
   }
   exitButton.show();
+  
+  Button resetButton = new Button(500, 925, 400, 80, "Reset High Scores");
+  if (resetButton.isClicked()) {
+    json.setInt("highscore_3", 0);
+      json.setInt("highscore_2", 0);
+      json.setInt("highscore_1", 0);
+      saveJSONObject(json, "highscores.json");
+  }
+  resetButton.show();
 }
 
-void keyPressed(){
- if(key=='r'){
-  save("img.png"); 
- }
+void keyPressed() {
+  if (key=='r') {
+    save("img.png");
+  }
 }
